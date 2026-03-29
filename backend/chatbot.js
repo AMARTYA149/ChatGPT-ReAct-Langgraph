@@ -100,7 +100,7 @@ export async function generate(userMessage, threadId) {
         if (!toolCalls) {
             //here we end the chatbot response
             cache.set(threadId, messages);
-            console.log(JSON.stringify(cache.data));
+            // console.log(JSON.stringify(cache.data));
             return completions.choices[0].message.content;
         }
 
@@ -122,38 +122,7 @@ export async function generate(userMessage, threadId) {
             }
         }
 
-        //    const completions2 = await groq.chat.completions.create({
-        //     temperature: 0,
-        //     // frequency_penalty: 1,
-        //     // response_format: { type: 'json_object' },
-        //     model: 'llama-3.3-70b-versatile',
-        //     messages: messages,
-        //     tools: [
-        //         // Sample request body with tool definitions and messages
-        //         {
-        //             "type": "function",
-        //             "function": {
-        //                 "name": "webSearch",
-        //                 "description": "Search the latest information and realtime data on the internet",
-        //                 "parameters": {
-        //                     // JSON Schema object
-        //                     "type": "object",
-        //                     "properties": {
-        //                         "query": {
-        //                             "type": "string",
-        //                             "description": "The search query to perform search on"
-        //                         }
-        //                     },
-        //                     "required": ["query"]
-        //                 }
-        //             }
-        //         }
-
-        //     ],
-        //     tool_choice: 'auto'
-        // });
-
-        // console.log("Response:", JSON.stringify(completions2.choices[0].message, null, 2));
+       
     }
 
 
@@ -172,6 +141,5 @@ async function webSearch({ query }) {
         .map((result) => result.content)
         .join("\n\n");
 
-    // console.log(`Final Result: ${finalResult}`)
     return finalResult;
 }

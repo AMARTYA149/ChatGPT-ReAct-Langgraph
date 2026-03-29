@@ -34,6 +34,7 @@ async function generate(text){
         input.value = "";
         askBtn.disabled = true;
         chatContainer.appendChild(loadingElem)
+        loadingElem.scrollIntoView({ behavior: 'smooth' });
 
         //Call server
         const assistantMessage = await callServer(text);
@@ -44,6 +45,7 @@ async function generate(text){
         loadingElem.remove();
         askBtn.disabled = false;
         chatContainer?.appendChild(assistantMsgElem);
+        assistantMsgElem.scrollIntoView({ behavior: 'smooth' });
 
 
 }
