@@ -11,6 +11,7 @@ import { TavilySearch } from "@langchain/tavily";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import * as z from "zod";
+import { printGraph } from "./utils.js";
 
 /** Tools */
 const search = new TavilySearch({
@@ -90,6 +91,9 @@ const graph = new StateGraph(MessagesAnnotation)
 const app = graph.compile();
 
 async function main(){
+
+    /** Print the graph */
+    await printGraph(app, './customGraph.png');
     const result = await app.invoke({
         messages: [{role: 'user', content: 'What is the current weather in Moscow?'}]
     })
