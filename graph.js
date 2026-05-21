@@ -4,14 +4,20 @@ Build the graph
 Invoke the agent
 Add the memory
  */
-
+import readline from 'node:readline/promises';
 import { ChatGroq } from "@langchain/groq";
 import { tool } from "langchain"
 import { TavilySearch } from "@langchain/tavily";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import { MessagesAnnotation, StateGraph, END } from "@langchain/langgraph";
 import * as z from "zod";
 import { printGraph } from "./utils.js";
+import { MemorySaver } from "@langchain/langgraph";
+
+/** 
+ * Memory
+ */
+const checkpointer = new MemorySaver();
 
 /** Tools */
 const search = new TavilySearch({
@@ -56,13 +62,13 @@ async function callModel(state) {
     const response = await llm.invoke(state.messages);
     // console.log("Response in callModel: ", response);
 
-    return {messages: [response]};
+    return { messages: [response] };
 }
 
 /**
  * Conditional Edge
  */
-function shouldContinue(state){
+function shouldContinue(state) {
 
     /**
      * Here we can control the flow as per usecase, applying the guardrails, handling security, etc
@@ -74,7 +80,7 @@ function shouldContinue(state){
     // console.log("messages: ", state.messages);
     const lastMessage = state.messages[state.messages.length - 1];
 
-    if(lastMessage.tool_calls?.length){
+    if (lastMessage.tool_calls?.length) {
         return 'tools';
     }
 
@@ -82,26 +88,42 @@ function shouldContinue(state){
 }
 
 const graph = new StateGraph(MessagesAnnotation)
-.addNode("llm", callModel)
-.addNode("tools", toolNode)
-.addEdge("__start__", "llm")
-.addEdge("tools", "llm")
-.addConditionalEdges("llm", shouldContinue)
+    .addNode("llm", callModel)
+    .addNode("tools", toolNode)
+    .addEdge("__start__", "llm")
+    .addEdge("tools", "llm")
+    .addConditionalEdges("llm", shouldContinue, {
+        __end__: END,
+        tools: 'tools'
+    })
 
-const app = graph.compile();
+const app = graph.compile({ checkpointer });
 
-async function main(){
+async function main() {
+    const config = { configurable: { thread_id: "1" } };
 
     /** Print the graph */
     await printGraph(app, './customGraph.png');
-    const result = await app.invoke({
-        messages: [{role: 'user', content: 'What is the current weather in Moscow?'}]
-    })
 
-    const message = result.messages;
-    const final = message[message.length - 1];
+    /**Take user input */
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+    while (true) {
+        const userInput = await rl.question("You: ");
+        if (userInput === '/bye') {
+            break;
+        }
 
-    console.log("AI: ", final.content)
+        const result = await app.invoke({
+            messages: [{ role: 'user', content: userInput }]
+        }, config)
+
+        const message = result.messages;
+        const final = message[message.length - 1];
+
+        console.log("AI: ", final.content)
+    }
+
+    rl.close();
 
 }
 
