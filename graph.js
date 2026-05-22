@@ -38,7 +38,7 @@ const calendarEvents = tool(
     {
         name: 'get-calendar-events',
         description: "Call to get the calendar events",
-        search: z.object({
+        schema: z.object({
             query: z.string().describe('The query to use in calendar eventd search!')
         })
     }
